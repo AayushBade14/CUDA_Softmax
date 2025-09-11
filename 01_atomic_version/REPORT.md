@@ -1,5 +1,10 @@
 # SOFTMAX WITH ATOMIC APPROACH
 
+# USAGE
+```nvcc -lineinfo ./softmax_atomic.cu -o softmax_atomic
+   ./softmax_atomic
+```
+
 ## Features
 1. Data genereted on GPU.
 2. Calculating softmax in 3-passes (calculate exponents -> calculate sum -> normalize).
