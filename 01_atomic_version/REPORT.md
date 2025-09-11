@@ -1,8 +1,9 @@
 # SOFTMAX WITH ATOMIC APPROACH
 
 # USAGE
-```nvcc -lineinfo ./softmax_atomic.cu -o softmax_atomic
-   ./softmax_atomic
+```
+    nvcc -lineinfo ./softmax_atomic.cu -o softmax_atomic
+    ./softmax_atomic
 ```
 
 ## Features
