@@ -16,6 +16,9 @@
 2. Each thread trying to access it at the same time creates race conditions and limits throughput.
 3. This approach scales poorly for data more than 10Million and can be optimized using the shared memory available to each block, to improve performance.
 
+### Nsight systems output
+
+### Nsight compute output
 ![ncu output](./1.png)
 ![ncu output](./2.png)
 ![ncu output](./3.png)
