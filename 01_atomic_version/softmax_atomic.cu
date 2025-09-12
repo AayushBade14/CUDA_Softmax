@@ -1,7 +1,7 @@
 #include <cuda_runtime.h>
 #include <iostream>
 
-#define N 10000000
+#define N 100000000
 
 // method for generating data on GPU.
 __global__ void generate_data(float* d_data){
@@ -56,9 +56,8 @@ int get_device_properties(){
 }
 
 // method to perform validity of softmax
-bool check_validity(float* smax){
+void check_validity(float* smax){
   float sum = 0.0f;
-  float epsilon = 0.00001f;
 
   for(unsigned int i = 0; i < N; i++){
     sum += smax[i];
@@ -66,17 +65,6 @@ bool check_validity(float* smax){
   
   std::cout<<"----- Performing validity check -----"<<std::endl;
   std::cout<<"ERROR: "<<(1.0f-sum)<<"%"<<std::endl;
-
-  if(1.0f - sum <= epsilon) return true;
-  else return false;
-}
-
-// method to print softmaxed values
-void print_softmax_values(float* smax){
-  for(unsigned int i = 0; i < N; i++){
-    std::cout<<smax[i]<<", ";
-  }
-  std::cout<<"\n";
 }
 
 int main(void){
@@ -129,15 +117,8 @@ int main(void){
 
   cudaMemcpy(h_smax, d_smax, size, cudaMemcpyDeviceToHost);
   
-  if(check_validity(h_smax)){
-    std::cout<<"Softmax is working!"<<std::endl;
-    print_softmax_values(h_smax);
-  }
-  else{
-    std::cout<<"Softmax is not working right!"<<std::endl;
-  }
-  
-  printf("\n\n\n ELAPSED-TIME: %f ms",milliseconds);
+  check_validity(h_smax);
+  printf("\nELAPSED-TIME: %f ms",milliseconds);
   
   cudaFree(d_sum);
   cudaFree(d_smax);

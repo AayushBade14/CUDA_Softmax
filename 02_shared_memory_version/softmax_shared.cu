@@ -1,7 +1,7 @@
 #include <cuda_runtime.h>
 #include <iostream>
 
-#define N 10000000
+#define N 100000000
 
 const int threadsPerBlock = 256;
 const int blocksPerGrid = (N + threadsPerBlock - 1)/threadsPerBlock;
@@ -78,7 +78,45 @@ __global__ void second_pass(float* x, float* z, float sum){
   }
 }
 
+// method to pring device properties.
+int get_device_properties(){
+  cudaDeviceProp prop;
+  cudaGetDeviceProperties(&prop,0);
+  printf("---------- DEVICE-PROPERTIES ----------\n");
+  printf("Name: %s\n",prop.name);
+  printf("Version: %d.%d\n",prop.major,prop.minor);
+  printf("ClockRate: %d\n",prop.clockRate);
+  printf("Total Global Memory: %ld\n",prop.totalGlobalMem);
+  printf("Shared Memory Per Block: %ld\n",prop.sharedMemPerBlock);
+  printf("Registers Per Block: %d\n",prop.regsPerBlock);
+  printf("Max Threads Per Block: %d\n",prop.maxThreadsPerBlock);
+  printf("----------------------------------------\n\n");
+
+  if(prop.maxThreadsPerBlock * sizeof(float) >= prop.sharedMemPerBlock)
+    return 256;
+  else
+    return prop.maxThreadsPerBlock;
+}
+
+// method to perform validity of softmax
+void check_validity(float* smax){
+  float sum = 0.0f;
+
+  for(unsigned int i = 0; i < N; i++){
+    sum += smax[i];
+  }
+  
+  std::cout<<"----- Performing validity check -----"<<std::endl;
+  std::cout<<"ERROR: "<<(1.0f-sum)<<"%"<<std::endl;
+}
+
 int main(void){
+  float milliseconds = 0.0f;
+  cudaEvent_t start, stop;
+  cudaEventCreate(&start);
+  cudaEventCreate(&stop);
+
+
   int size = N * sizeof(float);
   
   // HOST data
@@ -94,6 +132,9 @@ int main(void){
   float* d_max_partial;
   float* d_sum_partial;
   
+    
+  cudaEventRecord(start);
+
   // allocating memory on device
   cudaMalloc((void**)&d_x, size);
   cudaMalloc((void**)&d_max_partial, blocksPerGrid * sizeof(float));
@@ -119,14 +160,21 @@ int main(void){
   // second pass finally normalizes
   second_pass<<<blocksPerGrid, threadsPerBlock>>>(d_x, d_z, sum);
   cudaMemcpy(h_z, d_z, size, cudaMemcpyDeviceToHost); // copying the results to HOST from DEVICE
-  
-  // ensuring for correct results, as result of softmax should sum to 1
-  float test = 0.0f;
-  for(int i = 0; i < N; i++){
-    test += h_z[i];
-  }
+ 
+  cudaEventRecord(stop);
+  cudaEventSynchronize(stop);
+  cudaEventElapsedTime(&milliseconds, start, stop);
 
-  printf("SUM-TEST-RESULT: %.3f\n",test);
+
+  // ensuring for correct results, as result of softmax should sum to 1
+  //float test = 0.0f;
+  //for(int i = 0; i < N; i++){
+    //test += h_z[i];
+  //}
+
+  //printf("SUM-TEST-RESULT: %.3f\n",test);
+  check_validity(h_z);
+  printf("\nELAPSED-TIME: %f ms",milliseconds);
 
   // cleaning up resources
   delete[] h_z;
