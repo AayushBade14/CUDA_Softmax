@@ -1,4 +1,5 @@
 # Approach-1: Softmax with atomic (BASELINE)
+This was my first attempt at creating softmax implementation in CUDA, I'm using this implementation as a baseline as it isn't implemented so efficiently and uses some hacks. Within this implementation I managed to get an okay performance by using threadsPerBlock = 1024 (Maximum for my NVIDIA card).
 
 # USAGE
 ```
@@ -15,6 +16,8 @@
 1. Current implementation is using atomic_add in the 2nd pass, each thread trying to access memory at the same time creates race conditions and limits throughput.
 2. Every kernel reads/writes global memory directly. And no use of fast-shared memory.
 3. Kernel occupancy ranges from 39.33% to 58.42%, which clearly shows underutilization of GPU resources.
+4. Too many kernels being used.
+5. Too many CPU-GPU data transfers, which adds up to the overhead.
 
 ## Result
 ![result](./result_atomic.png)
@@ -41,4 +44,8 @@
 2. Compute throughput is moderate (32.62%) as it is doing floating-point divisions. This suggests that this kernel is memory-bound.
 3. Theorotical occupancy is 66.67% while we've achieved 58.42%, which is suggesting that this kernel is properly utilizing GPU.
 
+## Improvements for next version
+1. Replace atomic_add with block-level reduction in shared memory. As shared memory allows fast access. It'll also reduce finding max and sum complexity from O(n) to O(log2(n)).
+2. Minimize the number of kernel used.
+3. Reduce the number of CPU-GPU data transfers.
 
