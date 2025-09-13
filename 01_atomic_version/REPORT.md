@@ -26,22 +26,22 @@ This was my first attempt at creating softmax implementation in CUDA, I'm using 
 #### [+] generate_data kernel
 ![ncu output](./generatedata_atomic.png)
 1. Memory and DRAM throughput is high (97.37%) as this method is generating data and utilizing memory. 
-2. Compute throughput is low (20.63%). Which makes it clear that this kernel is memory-bound kernel.
+2. Compute throughput is low (20.63%). As the data-generation dominates the kernel leans memory-bound.
 3. Theorotical occupancy is 66.67% while we've achieved 39.33%. Which is hinting at underutilization of GPU.
 #### [+] first_pass kernel
 ![ncu output](./firstpass_atomic.png)
 1. Memory and DRAM throughput are high (90.42%) as this method is computing exp(x) and utilizing memory.
-2. Compute throughput is low (14.36%), due to the minimal compute required for calculating exp(x). And thus this kernel is memory-bound kernel. 
+2. Compute throughput is low (14.36%), due to the minimal compute required for calculating exp(x) and being dominated by exp(x) writes to memory, this kernel is memory-bound kernel. 
 3. Theorotical occupancy is 66.67% while we've achieved 53.56%. Which is okay given the theoroticalvalue.
 #### [+] second_pass kernel
 ![ncu output](./secondpass_atomic.png)
 1. Memory and DRAM throughput are low (0.95%) as this method is just responsible for atomically adding values and it isn't using much memory.
-2. Compute throughput is 1.59% which is larger in comparision to memory throughput and thus this is a compute-bound kernel.
+2. Compute throughput is 1.59% which is larger in comparision to memory throughput as it is dominated by atomic addition operations and thus this is a compute-bound kernel.
 3. Theorotical occupancy is 66.67% while we've achieved 39.95%. Which is suggesting that there is underutilization of GPU.
 #### [+] third_pass kernel
 ![ncu output](./thirdpass_atomic.png)
 1. Memory and DRAM throughput is high (80.82%) as this method is normalizing the exp(x) values and storing them in memory.
-2. Compute throughput is moderate (32.62%) as it is doing floating-point divisions. This suggests that this kernel is memory-bound.
+2. Compute throughput is moderate (32.62%) as it is doing floating-point divisions. This suggests that this kernel is memory-bound, being dominated by normalized value memory writes.
 3. Theorotical occupancy is 66.67% while we've achieved 58.42%, which is suggesting that this kernel is properly utilizing GPU.
 
 ## Improvements for next version
